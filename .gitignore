@@ -31,6 +31,11 @@
 !/work/us_market_policy.py
 !/work/valuation_policy.py
 !/work/write_feishu.py
+!/work/collect_forecast_repair.py
+!/work/refresh_repair_prices.py
+!/work/forecast_fields.py
+!/work/publish_forecast_repair.py
+!/work/test_forecast_fields.py
 .env
 *.cookies
 *.raw

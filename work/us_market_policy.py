@@ -33,4 +33,11 @@ def apply_us_scope(payload):
         row[8]='美股接口市值和PE原值保留并注明来源；不通过其他上市市场推算'
         row[10]='有美股原始值直接展示；缺项标未取得；保留本币报表原值，不换汇'
     result['source_scope']={'market':'US','symbol_source':'main_table_column_D','allow_home_market_fallback':False,'allow_cross_listing_conversion':False,'policy':SCOPE}
-    return apply_ttm(result)
+    result=apply_ttm(result)
+    from forecast_fields import apply_rows
+    from valuation_policy import col
+    result['rows'],forecast_red=apply_rows(result['rows'],'main')
+    flagged={f'{col(j)}{i+1}' for i,j in forecast_red}
+    result['red_cells']=sorted(set(result.get('red_cells',[]))|flagged)
+    result['black_cells']=[c for c in result.get('black_cells',[]) if c not in flagged]
+    return result

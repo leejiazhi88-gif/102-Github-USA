@@ -22,6 +22,10 @@
 
 ## 配置与检查
 
+预测字段修复：`collect_forecast_repair.py` 逐股取 Nasdaq 年度 EPS 与半导体实际财务，`--refresh` 强制重新请求；默认保留已存响应的原始时间。`refresh_repair_prices.py` 读取同一美股证券价格，`forecast_fields.py` 按源财年结束年份生成记录，`publish_forecast_repair.py` 以在线读回快照为冲突检查基线，定向补写现有表并创建逐股核验页。
+
+远期 PE 可以直接由价格÷预测 EPS 得到，无需预测股数。Nasdaq EPS 未明确币种/调整口径时，采用美股每份 USD 的解释仅显示为红字参考估值，不冒充独立验证结果；已知币种或证券不匹配则不计算。总预测净利润仍禁止使用市值÷股价反推股数来制造。实际美元净利润须同时有该股财务API记录和页面 `In USD Thousands` 单位证据。预期EPS增长和总利润增长分开显示。
+
 Python 3 标准库及 curl 可运行主要筛选和飞书 API 流程。飞书凭据从环境变量、根目录 `.env` 或忽略的 `work/local_config.json` 指定的文件加载。参考 `.env.example`，切勿提交真实凭据。
 
 ```sh
@@ -29,6 +33,7 @@ python3 -m unittest discover -s work -p test_selection.py
 python3 -m unittest discover -s work -p test_ttm_source.py
 python3 -m unittest discover -s work -p test_valuation_policy.py
 python3 -m unittest discover -s work/longbridge -p test_fetch_ttm.py
+python3 -m unittest discover -s work -p test_forecast_fields.py
 ```
 
 普通代码迭代通过 Git 提交与推送同步，业务数据仍交付在线飞书表。每次同步记录在 `CHANGELOG.md`；凭据、Cookie、抓取缓存和第三方依赖目录保留本地。
