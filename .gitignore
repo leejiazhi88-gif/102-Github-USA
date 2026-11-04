@@ -36,6 +36,10 @@
 !/work/forecast_fields.py
 !/work/publish_forecast_repair.py
 !/work/test_forecast_fields.py
+!/work/quarter_collect.py
+!/work/quarter_fields.py
+!/work/publish_quarter_extension.py
+!/work/test_quarter_fields.py
 .env
 *.cookies
 *.raw

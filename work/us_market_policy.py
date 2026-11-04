@@ -40,4 +40,9 @@ def apply_us_scope(payload):
     flagged={f'{col(j)}{i+1}' for i,j in forecast_red}
     result['red_cells']=sorted(set(result.get('red_cells',[]))|flagged)
     result['black_cells']=[c for c in result.get('black_cells',[]) if c not in flagged]
+    from quarter_fields import apply_main
+    result['rows'],quarter_red,quarter_black=apply_main(result['rows'])
+    qr={f'{col(j)}{i}' for i,j in quarter_red};qb={f'{col(j)}{i}' for i,j in quarter_black}
+    result['red_cells']=sorted((set(result['red_cells'])|qr)-qb)
+    result['black_cells']=sorted((set(result['black_cells'])|qb)-qr)
     return result

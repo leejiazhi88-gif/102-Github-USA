@@ -4,13 +4,15 @@ from decimal import Decimal
 from write_feishu import connect,helper
 from selection_sources import OUT
 from publish_selection_sheet import norm,compressed_ranges
+from valuation_policy import col
 
 def main():
     path=OUT/'sheet_payload.json';p=json.loads(path.read_text());old=copy.deepcopy(p)
     statepath=OUT/'online_state.json';state=json.loads(statepath.read_text());sid=state['sheet_id']
     token,ss=connect();base=f'sheets/v2/spreadsheets/{ss}'
     def read(a,w):return norm(helper.request('GET',base+f'/values/{sid}!{a}?valueRenderOption=UnformattedValue',token)['data']['valueRange']['values'],w)
-    before=read('A1:BT464',72)
+    width=len(p["rows"][0]);last_col=col(width-1)
+    before=read(f'A1:{last_col}464',width)
     assert before==p['rows'],'Online data changed; reconcile before sorting'
     (OUT/'before_hierarchical_sort.json').write_text(json.dumps(before,ensure_ascii=False))
     sectors=collections.defaultdict(Decimal);groups=collections.defaultdict(Decimal)
@@ -28,22 +30,22 @@ def main():
     assert {r[3]:r for r in before[1:]}=={r[3]:r for r in p['rows'][1:]}
     main_patches=[]
     for start in range(1,len(p['rows']),70):
-        part=p['rows'][start:start+70];main_patches.append({'range':f'{sid}!A{start+1}:BT{start+len(part)}','values':part})
+        part=p['rows'][start:start+70];main_patches.append({'range':f'{sid}!A{start+1}:{last_col}{start+len(part)}','values':part})
     summary=[r+['']*(11-len(r)) for r in p['summary']]
     patches=main_patches+[{'range':f'{sid}!A468:K502','values':summary}]
     for patch in patches:helper.request('PUT',base+'/values',token,{'valueRange':patch})
-    styles=[{'ranges':[f'{sid}!A2:BT464'],'style':{'foreColor':'#202124'}},{'ranges':[f'{sid}!H2:I464'],'style':{'font':{'bold':False}}}]
+    styles=[{'ranges':[f'{sid}!A2:{last_col}464'],'style':{'foreColor':'#202124'}},{'ranges':[f'{sid}!H2:I464'],'style':{'font':{'bold':False}}}]
     for group in group_order:
         indices=[i for i,r in enumerate(p['rows'][1:],2) if (r[1],r[2])==group]
         assert indices==list(range(min(indices),max(indices)+1))
-        styles.append({'ranges':[f'{sid}!A{min(indices)}:BT{max(indices)}'],'style':{'backColor':p['colors'][group[1]]}})
+        styles.append({'ranges':[f'{sid}!A{min(indices)}:{last_col}{max(indices)}'],'style':{'backColor':p['colors'][group[1]]}})
         styles.append({'ranges':[f'{sid}!H{min(indices)}:I{min(indices)+1}'],'style':{'font':{'bold':True}}})
     for i,r in enumerate(p['summary'][10:],478):styles.append({'ranges':[f'{sid}!A{i}:K{i}'],'style':{'backColor':p['colors'][r[1]]}})
     helper.request('PUT',base+'/styles_batch_update',token,{'data':styles})
     red=compressed_ranges(p['red_cells'],sid)
     for start in range(0,len(red),100):helper.request('PUT',base+'/styles_batch_update',token,{'data':[{'ranges':red[start:start+100],'style':{'foreColor':'#C00000'}}]})
     helper.request('PUT',base+'/dimension_range',token,{'dimension':{'sheetId':sid,'majorDimension':'ROWS','startIndex':1,'endIndex':600},'dimensionProperties':{'fixedSize':29}})
-    after=read('A1:BT464',72);assert after==p['rows']
+    after=read(f'A1:{last_col}464',width);assert after==p['rows']
     assert read('A468:K502',11)==summary
     assert read(f'A{p["extra_start"]}:E{p["last_row"]}',5)==[r+['']*(5-len(r)) for r in p['extra']]
     sector_order=list(dict.fromkeys(r[1] for r in after[1:]));assert [sectors[g] for g in sector_order]==sorted(sectors.values(),reverse=True)

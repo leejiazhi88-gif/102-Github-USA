@@ -104,6 +104,9 @@ def main():
     from forecast_fields import apply_rows
     rows,forecast_red=apply_rows(rows,'selection')
     red.extend(f'{col(j)}{i+1}' for i,j in forecast_red)
+    from quarter_fields import extend_selection
+    rows,quarter_red=extend_selection(rows)
+    red.extend(f'{col(j)}{i}' for i,j in quarter_red)
     start=len(rows)+4
     summary=[['筛选规则与分类覆盖'],['规则','范围/口径','结果'],['市值门槛','300亿美元 = 30,000,000,000 USD；纳入所有达到门槛且通过证券类型筛选的公司',sum(c['cap']>=3e10 for c in selected)],['类目前二','每个GICS二级按Nasdaq美股市值排序，至少保留前2家；低于门槛也补入',len([c for c in selected if c['cap']<3e10])],['筛选范围',f'Nasdaq返回{candidate["nasdaq_universe_count"]}条证券；排除优先股、票据、权证及已知重复股类；GICS使用参考表及公开映射',len(selected)],['股票去重','例如Alphabet仅保留GOOGL、伯克希尔仅保留BRK.B；ITUB保留其美股发行人代表证券','不将两个股类计作两家公司'],['快照边界','市值来自Nasdaq抓取快照（源asOf未提供），PE/价格来自东财逐股时间戳；本表不是同一毫秒全市场快照',captured],['继承资料','历史涨幅基准10/27；财务与分部来自10/28档案；已撤销不可靠的预测利润折算','继承/未核验字段红字'],['颜色','每个GICS二级一个底色；同类连续排列；类内市值从大到小；所有行29px','25个二级颜色'],['一级','二级','二级代码','入选家数','达门槛家数','补足家数','市值第1名','第1名市值(亿美元)','市值第2名','第2名市值(亿美元)','分类颜色']]
     for g in dict.fromkeys(c['group'] for c in selected):
@@ -123,7 +126,7 @@ def main():
     final_end=excluded_start+len(extra)-1
     assert not candidate['unmapped']
     assert len({c['symbol'] for c in selected})==len(selected)
-    assert sum(len(v) for v in rows)==len(rows)*72
+    assert all(len(r)==len(rows[0]) for r in rows)
     assert all('\n' not in str(v) and '\r' not in str(v) for r in rows+summary+extra for v in r)
     result={'title':'GICS_300亿美元_二级Top2_1029','rows':rows,'selected':[dict((k,v) for k,v in c.items() if k not in ('reference','quote')) for c in selected],'summary_start':start,'summary':summary,'extra_start':excluded_start,'extra':extra,'red_cells':sorted(set(red)),'colors':colors,'last_row':final_end,'metrics':dict(metrics,stocks=len(selected),groups=25,sectors=len({c['sector'] for c in selected}),threshold=sum(c['cap']>=3e10 for c in selected),supplements=sum(c['cap']<3e10 for c in selected),removed=len(removed))}
     (OUT/'sheet_payload.json').write_text(json.dumps(result,ensure_ascii=False,indent=2))
