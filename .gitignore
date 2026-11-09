@@ -44,6 +44,10 @@
 !/work/annual_profit_fields.py
 !/work/publish_annual_profit.py
 !/work/test_annual_profit.py
+!/work/collect_growth_bases.py
+!/work/growth_fields.py
+!/work/publish_growth.py
+!/work/test_growth_fields.py
 .env
 *.cookies
 *.raw
