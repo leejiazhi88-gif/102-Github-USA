@@ -40,6 +40,10 @@
 !/work/quarter_fields.py
 !/work/publish_quarter_extension.py
 !/work/test_quarter_fields.py
+!/work/collect_annual_profit.py
+!/work/annual_profit_fields.py
+!/work/publish_annual_profit.py
+!/work/test_annual_profit.py
 .env
 *.cookies
 *.raw

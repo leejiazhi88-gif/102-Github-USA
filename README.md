@@ -22,6 +22,8 @@
 
 ## 配置与检查
 
+年度利润补齐针对463股表 `O:Q`（FY2026～FY2028），采用单独的 `opq_repair` 本地快照，来源/时间/逐年状态写入 `AZ`。`collect_annual_profit.py` 获取Nasdaq年度预测、已结束财年的实际年报和东财美股f38直接股数，缺股数时重新解析105/106/107美股市场代码，年报缺口再查询东财美股年度归母利润；`annual_profit_fields.py --as-of YYYY-MM-DD` 优先使用有美元千元单位证据的Nasdaq年度实际值或经过完整年度区间、公告日、USD和美股证券校验的东财年度归母利润，否则按明确标红的固定股数场景估算。不存在的年度EPS不按其他年度外推，非美元或已知每份单位不匹配不相乘。`publish_annual_profit.py` 写入前检查在线冲突，写后验证全表，保留其他列、分类底色与29px行高。后续筛选构建自动保留本模块结果。OPQ和其他估值/季度模块各自保留快照时间，不能默认它们同时刷新。
+
 季度模块位于463家公司筛选表 `BU:CL`：FY2026Q1至FY2028Q4的12个季度、原表Q3锁定存档，以及5列财季/原始EPS/股数/来源说明。`quarter_collect.py` 取Nasdaq单季实际利润、每股财务页面单位证据及东方财富美股f38直接股数；`quarter_fields.py` 按年度预测的财年末月份映射季度，处理52/53周年度的月初边界；`publish_quarter_extension.py` 追加列并核对原72列未变。
 
 按用户授权，季度预测盈利可以采用“当前股数不变”场景：预测EPS×同美股代码接口直接股数。该值为红字估算，并说明未独立核验的ADR每份、EPS币种与调整口径，不能称为供应商净利润共识；明确币种不匹配不计算。负EPS保留亏损估算；无该季EPS则留缺，不用年度/4补数。原表历史数字缺少独立复核时标为“原表存档待核验”，不据此认定未来季度已实现利润。原始抓取缓存及表格快照仍仅在本地保存。
@@ -39,6 +41,7 @@ python3 -m unittest discover -s work -p test_valuation_policy.py
 python3 -m unittest discover -s work/longbridge -p test_fetch_ttm.py
 python3 -m unittest discover -s work -p test_forecast_fields.py
 python3 -m unittest discover -s work -p test_quarter_fields.py
+python3 -m unittest discover -s work -p test_annual_profit.py
 ```
 
 普通代码迭代通过 Git 提交与推送同步，业务数据仍交付在线飞书表。每次同步记录在 `CHANGELOG.md`；凭据、Cookie、抓取缓存和第三方依赖目录保留本地。
